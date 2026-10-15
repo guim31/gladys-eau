@@ -1,0 +1,18 @@
+{
+  "code": "00",
+  "message": "OK",
+  "content": {
+    "leak_alert": {
+      "isActive": true,
+      "status": "NO_ALERT",
+      "message": "Aucune fuite détectée",
+      "buttons": []
+    },
+    "overconsumption_alert": {
+      "isActive": true,
+      "status": "NO_ALERT",
+      "message": "Pas de surconsommation",
+      "buttons": []
+    }
+  }
+}

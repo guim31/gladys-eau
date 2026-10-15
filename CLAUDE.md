@@ -31,16 +31,25 @@ pushing.
 ## Architecture
 
 ```
-index.js                          SDK wiring only: handlers registered before connect()
-src/devices/index.js              registry of the device blueprints + dispatch helpers
-src/devices/<type>.js             one device type per file (buildDevice, onPoll, onSetValue...)
-src/scenes.js                     scene action handlers (manifest `scene_actions`)
-src/widgets.js                    dashboard widget handlers (manifest `widgets`)
+index.js                          SDK wiring only: createApp + registerHandlers, then connect()
+src/app.js                        the cycle (sign in, read, publish), handlers, trigger, action, widget
+src/providers/suez.js             Suez « Tout sur mon eau » client (port of pySuezV2)
+src/providers/saur.js             Saur client (port of saur_client)
+src/providers/index.js            the supported distributors (keys stored in config and ids)
+src/meters.js                     device blueprint, dated states, current states
+src/history.js                    daily readings cache, totals, comparisons, unusual-consumption check
+src/widgets.js                    dashboard widget content (water_summary)
+src/i18n.js                       every text, en/fr/de/es
 src/config.js                     DEFAULT_CONFIG (mirrors the manifest defaults) + normalization
-src/weather.js                    example driver (Open-Meteo)
+src/http.js                       cookie-jar HTTP session (from gladys-opower)
+src/poller.js, src/issues.js      internal 8 h timer (Gladys#3198), once-only failure logs
+src/store.js                      /data/eau-state.json (0600): session, readings, cursors, episodes
+src/time.js                       Paris calendar dates
+scripts/probe.mjs                 live, read-only check of the sign-ins (run where the network allows)
 gladys-assistant-integration.json manifest: name, config_schema, actions, image...
-docs/en.md, docs/fr.md            user documentation, re-hosted by Gladys (mandatory)
-test/                             node --test, against the SDK's fake Gladys (integration-sdk/testing)
+docs/{en,fr,de,es}.md             user documentation, re-hosted by Gladys (same sections)
+test/                             node --test, against the SDK's fake Gladys and a fake web
+test/fixtures/suez, saur          answers in the libraries' shapes (EyeOnSaur mocks for Saur)
 .github/scripts/release.mjs       release helpers (manifest bump, changelog), tested in test/
 ```
 
@@ -70,8 +79,10 @@ test/                             node --test, against the SDK's fake Gladys (in
   `type: "provider"`: 5.1.0). `test/manifest.test.js` ties the manifest to the
   code (defaults, action, scene and widget handlers): change both sides
   together.
-- **User-facing text** is bilingual (English and French): action messages,
-  manifest texts, and `docs/en.md` / `docs/fr.md`, kept in sync.
+- **User-facing text** exists in English, French, German (informal "du") and
+  Spanish (formal "usted"): action messages, manifest texts, feature names,
+  widget texts, and `docs/en.md`, `fr.md`, `de.md`, `es.md`, kept in sync
+  (`test/i18n.test.js`).
 - **Style.** Prettier formats, ESLint catches mistakes. Comments explain why,
   in English. Tests never touch the network.
 
@@ -233,3 +244,54 @@ long, et sur un « Sie »/« Ihr… » de politesse en allemand. Le store exige 
 - Docs `en`, `fr`, `de`, `es` avec les mêmes sections.
 - Chauffe, ouverture, sécurité : ne rien rendre pilotable « comme un thermostat » ou par un assistant
   vocal quand une erreur serait dangereuse (leçon d'OctoPrint).
+
+## Cette intégration : Suez / Saur (eau)
+
+Développée **sans compte** Suez ni Saur et sans accès réseau aux deux sites depuis la session
+(proxy) : tout est testé sur fixtures, `scripts/probe.mjs` éprouve les vraies connexions jusqu'au
+refus d'un faux compte.
+
+**API**
+
+- **Suez** (pySuezV2, Apache-2.0) : `GET /mon-compte-en-ligne/je-me-connecte` donne le jeton CSRF,
+  écrit dans la page en JSON échappé (`csrfToken\u0022\u003A\u0022…`) ; `POST` du même formulaire
+  (`_csrf_token`, `tsme_user_login[_username]`, `tsme_user_login[_password]`) ; un bon mot de passe
+  pose le cookie `eZSESSID` et quitte le formulaire, parfois vers un autre hôte (les appels API
+  suivent l'hôte final). Session expirée = redirection vers le formulaire : une reconnexion, une
+  seule. La télémétrie (`/public-api/cel-consumption/telemetry?id_PDS&mode=daily&start_date&end_date`)
+  se lit mois par mois, en m³ ; un mois vide répond une erreur au code JSON `02`. Prix :
+  `get-price`, repli sur `/information/donnee/price/<insee>` (virgule décimale). Alertes :
+  `/public-api/contract/tile/alerts`, au niveau du contrat (`status != NO_ALERT`).
+- **Saur** (saur_client et EyeOnSaur, MIT) : `POST https://apib2c.azure.saurclient.fr/admin/v2/auth`
+  (JSON avec `client_id: frontjs-client`, champs captcha fixes) → jeton de 900 s, `clientId`,
+  `defaultSectionId`. Les compteurs sont les `sectionSubscriptions` de
+  `/admin/users/v2/website_areas/<clientId>` ; les jours d'un mois
+  (`/deli/section_subscription/<id>/consumptions/monthly?year&month`, m³) ; un mois sans données
+  répond une erreur 4xx (EyeOnSaur le met de côté). Pas de prix ni d'alerte par cette API.
+- Identifiants d'appareil : `idPDS` (Suez) et `sectionSubscriptionId` (Saur), stables quand le
+  compteur est changé. Plusieurs abonnements Saur peuvent porter le même numéro de série : le nom
+  de l'appareil reçoit alors la fin de l'identifiant.
+
+**Pièges découverts (vérifiés dans le cœur 5.2.1 et le SDK 0.15)**
+
+- **Le suivi d'énergie 5.2 refuse l'eau** : `energy_type` `water` est réservé et refusé (400), et
+  `publishEnergyConsumption` ne prend que des kWh. L'eau reste en `volume-sensor` (m³, L), comme
+  Veolia et Agur. `energy-sensor` n'accepte aucune unité de volume.
+- **Un état daté (`created_at`) ne déclenche jamais de scène** : `newStateEvent` l'envoie à
+  `saveHistoricalState`, qui n'émet pas `TRIGGERS.CHECK`. Pour réagir à une donnée en retard, il
+  faut un déclencheur d'intégration ou une action de scène, pas l'état de l'appareil.
+- `saveHistoricalState` met à jour une valeur existante au même instant (correction), mais ne
+  touche `last_value` que si l'instant est **plus récent** que la dernière valeur.
+- **`publishChangedStates` déduplique sur la valeur seule, sans `created_at`** : deux jours de même
+  consommation passeraient pour un doublon. Les états datés partent par `publishStates`, avec un
+  curseur à soi dans `/data` (`publishedUntil`, recouvrement de 5 jours).
+- 13 mois d'historique = ~400 états par compteur : `POST /state` plafonne à 100 par appel et 300
+  par minute ; l'historique part dans un budget glissant de 240 états/minute partagé entre
+  compteurs.
+- `leak-sensor/binary` : le type vient du groupe générique `DEVICE_FEATURE_TYPES.SENSOR.BINARY`
+  (le SDK n'a pas de `LEAK_SENSOR` dans les types). 1 = fuite.
+- Un `setTimeout` « unref » dans une attente que rien d'autre ne garde vivante fait sortir Node
+  avant la fin (vu dans un test) : pas d'`unref` sur une attente dont on dépend.
+- Outil d'écriture de la session : une séquence `\uXXXX` à une seule barre oblique est décodée à
+  l'écriture d'un fichier. Écrire les fixtures échappées par un script (`chr(92)`), et les exclure
+  de Prettier (`test/fixtures/**/*.html`).

@@ -1,0 +1,53 @@
+{
+  "code": "00",
+  "message": "OK",
+  "content": {
+    "nbCodeRef": 1,
+    "nbCodeRefFull": 1,
+    "nbCompteurFull": 1,
+    "nbMeters": 1,
+    "clientCompteursPro": [
+      {
+        "name": "M. DUPONT JEAN",
+        "reference": "999000111222",
+        "roles": ["TITULAIRE"],
+        "nbCompteurTotal": 1,
+        "nombreCompteurRr": 0,
+        "nombreCompteurSe": 0,
+        "nombreCompteurTr": 1,
+        "dateDebutDerniereConsoRelevee": "2026-09-01",
+        "dateFinDerniereConsoRelevee": "2026-09-30",
+        "derniereConsoRelevee": 9.12,
+        "compteursPro": [
+          {
+            "adresseDesserte": "1 RUE DE L'EXEMPLE",
+            "adresseDesserte1": "",
+            "adresseDesserte2": "",
+            "adresseDesserte3": "",
+            "anneeFabrication": "2019",
+            "calibre": "15",
+            "causeFermeture": null,
+            "codeEmplacement": "REG",
+            "codeEquipement": "CPT",
+            "compteurDivisionnaire": false,
+            "compteurGeneral": false,
+            "cpDesserte": "00000",
+            "etatCompteur": "EN_SERVICE",
+            "etatPDS": "ACTIF",
+            "fluide": "EAU",
+            "idAdresse": 100200,
+            "idPDS": 9876543,
+            "idSite": 400500,
+            "libelleCodeEmplacement": "Regard",
+            "matriculeCompteur": "19ZZ123456",
+            "numeroBadge": null,
+            "typeProprietaire": "SUEZ",
+            "typeRaccordement": "TR",
+            "usage": "DOMESTIQUE",
+            "villeDesserte": "EXEMPLEVILLE"
+          }
+        ]
+      }
+    ]
+  }
+}

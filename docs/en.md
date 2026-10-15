@@ -1,61 +1,219 @@
-# Demo Devices Template
+# Suez / Saur (eau)
 
-This is the user documentation of the integration. Gladys re-hosts this file
-and shows a permanent **Documentation** link to it in the Configuration screen
-(in the user's language, with English as the fallback) — it is when
-configuring that the user needs it most. Keep the short onboarding hints in
-the `section` blocks of the manifest `config_schema`; put the long
-step-by-step (screenshots, troubleshooting…) here.
+> **Developed without an account: feedback welcome.** This integration was written and tested
+> without a real Suez or Saur account, from the open-source libraries Home Assistant already
+> uses. If you try it, your feedback on the Gladys forum is precious, whether it works at once or
+> not.
+>
+> This integration is not affiliated with Suez or Saur, nor endorsed by them.
 
-## What you get
+## Overview
 
-Six demo devices show up after installation: a weather station (real data
-from Open-Meteo), a switch, a dimmable light, a smart plug with power
-metering, a motion sensor and a camera.
+Follow in Gladys the water consumption read by your meter, as your water distributor publishes it
+in your online customer area:
+
+- **Suez**, customer area "Tout sur mon eau" (toutsurmoneau.fr);
+- **Saur**, "Mon espace client" (mon-espace.saurclient.fr).
+
+For each meter, Gladys gets:
+
+- the **consumption of each day**, in litres, filed in the history on the day the water was
+  used;
+- the **meter index**, in m³;
+- the consumption of the current **month** and **year**, in m³;
+- with Suez, the **average water price** (€/m³) and the **leak alert** sent by Suez;
+- a **scene trigger** "Abnormal water consumption", once per episode;
+- a **scene action** giving the figures of the meter, for a message or a condition;
+- a dashboard **widget**: yesterday, this month, and the comparison with last month and last
+  year.
+
+The data arrives **a day or two late**: the remotely read meter sends its measures to the
+distributor, which publishes them the next day (sometimes the day after). This is not real-time
+monitoring.
+
+## Prerequisites
+
+- Gladys **5.1.0** or later.
+- A **remotely read water meter** (radio): without remote reading, the customer area only shows
+  an index read twice a year, and the integration has nothing daily to show you.
+- An active **online customer area** at your distributor, with its email and password. First
+  check that the website shows your consumption day by day: if the website does not, the
+  integration will not see it either.
+- Gladys must reach the Internet (the integration reads the distributor's website).
+
+The distributor's name is on your water bill. If your water comes from a municipal service,
+Veolia or another distributor, this integration is not for you: look at the other water
+integrations of the store (Veolia, Agur…).
 
 ## Configuration
 
-1. Open the **Configuration** tab of the integration.
-2. Set the **latitude** and **longitude** the demo weather station should
-   observe (they default to Paris), and pick your temperature unit.
-   The **refresh interval** sets how often the weather station and the
-   plug's power are read: every 5 minutes by default, every minute at most.
-3. Save: the devices appear in the **Discovery** tab, ready to be added.
+In **Integrations → Suez / Saur (eau) → Configuration**:
 
-The **Prefer the local connection** toggle drives the demo plug: it reports
-the channel it actually uses as a badge (local or cloud), with an orange dot
-when it runs degraded (local refused, cloud fallback).
+| Field                 | Role                                                                                                                                                      |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Water distributor     | Suez or Saur.                                                                                                                                             |
+| Email                 | The one of your customer area.                                                                                                                            |
+| Password              | The one of your customer area. Gladys keeps it; it never appears in the logs.                                                                             |
+| Meter number          | Optional. Leave empty to follow every meter of the account. Otherwise the meter number or the delivery point number of the bill (spaces are ignored).     |
+| Abnormal consumption  | The threshold of the "abnormal consumption" trigger: twice, three times (default) or five times your usual consumption, or the distributor's alerts only. |
+| Language of the texts | Language of the feature names and of the messages (French by default). The names are fixed when you add the meter: choose the language first.             |
 
-## Actions
+Save: the integration connects at once. The **Sign in and read now** button reads again on demand
+(at most once every quarter of an hour) and tells what it found.
 
-- **Test the weather provider** — performs a live request to Open-Meteo and
-  shows the current temperature and humidity under the button.
-- **Identify a device** — pick one of your devices in the list and it will
-  signal itself (the demo light "blinks" in the logs).
+Then, in the **Discovery** tab, add the meter(s) offered. When you add one, the integration sends
+Gladys the history already read: **13 months** of day-by-day consumption. This takes a few minutes
+(Gladys limits the number of values received per minute) and runs in the background.
 
-## Scenes
+## The water meter
 
-The integration adds its own cards to the scene editor (Gladys 5.1 or
-later), under the **Integrations** category:
+Each meter becomes a device "Water meter Suez 19ZZ123456" (or Saur). Its id in Gladys comes from
+the **delivery point** given by the distributor, not from the serial number: when the distributor
+replaces your meter, the device, its history and your scenes stay.
 
-- **Motion detected** (trigger) — starts the scene when a demo motion sensor
-  sees something move. Optionally pick the sensor and what moved (person,
-  animal); left empty, any detection matches. The following actions can
-  read what moved with `{{triggerEvent.data.target}}`.
-- **Identify a device** (action) — makes the chosen device signal itself.
-  It returns whether the device could signal itself, so the following
-  actions can depend on it.
+| Feature                    | Unit | Content                                                                                                                               |
+| -------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Meter index                | m³   | The last known index, dated with the day it was read.                                                                                 |
+| Daily consumption          | L    | One value per day, filed in the history **on the day used** (at noon). This is the curve to watch to follow your consumption.         |
+| Consumption this month     | m³   | The total of the current calendar month, over the days already published. On the 1st, it starts again from zero until the first data. |
+| Consumption this year      | m³   | The total since 1 January.                                                                                                            |
+| Average water price (€/m³) | €    | **Suez only**: the average price per m³ (subscription and taxes included) Suez gives for your contract or your town.                  |
+| Leak alert (Suez)          | —    | **Suez only**: 1 when Suez reports a leak in your customer area, 0 otherwise.                                                         |
 
-## Dashboard
+Saur publishes neither a price nor a leak alert this way: a Saur meter only has the first four
+features.
 
-Add the **Demo status** widget to a dashboard: it shows the live
-temperature of the weather station and the power of the office plug, the
-connection the plug currently uses (orange when degraded) and the observed
-location. Its **Identify the light** button makes the demo light signal
-itself.
+The energy tracking of Gladys 5.2 handles electricity only (the core still refuses a "water"
+contract): the water consumption does not enter it, it stays a volume sensor with its history, as
+in the Veolia and Agur integrations.
+
+## Widget
+
+The **Water consumption** widget (choose the meter in its settings, otherwise the first meter is
+used) shows:
+
+- the date of the latest published data;
+- the consumption of **yesterday** (or of the last known day), in litres;
+- the consumption of the current **month**, in m³;
+- the change, in percent, against **the same days of last month** and **the same month last
+  year** (orange above +20 %, green when you use less);
+- the last 14 days as bars;
+- the current year, the average price (Suez) and, if there is one, the alert in progress.
+
+The comparison stops at the last known day: on the 13th, it compares the 1st to the 13th with the
+1st to the 13th. It only shows when at least 80 % of the reference period is known.
+
+## Scene trigger
+
+**Abnormal water consumption** (`abnormal_consumption`) fires **once per episode**, when one of
+these conditions appears:
+
+- **Distributor leak alert** (`leak_alert`): Suez reports a leak;
+- **Distributor overuse alert** (`overconsumption_alert`): Suez reports an overconsumption;
+- **Days far above usual** (`unusual_consumption`): the last three known days, in a row, each
+  exceed the chosen threshold (three times by default) of your usual consumption, and by at least
+  100 litres. The usual consumption is the median of the 28 previous days.
+
+The episode ends when nothing abnormal remains; a new episode fires again. A restart of Gladys
+does not fire an episode in progress again.
+
+Filters: the meter, the reason. Variables for the scene: `reason`, `provider` (Suez or Saur),
+`date` (day of the reading), `liters` (litres that day), `usual_liters` (usual litres per day).
+
+Why three days, and not "water running at night"? Suez and Saur only publish one figure per day
+through these APIs: a continuous night-time flow cannot be seen. A leaking toilet or a broken pipe
+shows, in daily data, as several days in a row far above normal. One big day (filling a pool,
+watering) does not fire. Suez's own leak alert is computed by Suez from the meter's finer data.
+
+## Scene action
+
+**Get the water consumption** (`get_water_summary`): choose the meter; the action gives the rest
+of the scene:
+
+| Output                          | Content                                     |
+| ------------------------------- | ------------------------------------------- |
+| `last_date`                     | Last known day (YYYY-MM-DD)                 |
+| `last_day_liters`               | Litres that day                             |
+| `month_m3`                      | Consumption of the current month (m³)       |
+| `year_m3`                       | Consumption of the current year (m³)        |
+| `index_m3`                      | Meter index (m³)                            |
+| `previous_month_change_percent` | Change against the same days of last month  |
+| `last_year_change_percent`      | Change against the same month last year (%) |
+| `abnormal`                      | True during an abnormal-consumption episode |
+
+An unknown value (no history to compare with yet, for instance) is left empty rather than set to
+zero.
+
+## Scene examples
+
+- **Leak suspected → shut-off and message.** Trigger "Abnormal water consumption", reason
+  "Distributor leak alert" or "Days far above usual"; actions: send "Water leak suspected:
+  {{triggerEvent.data.liters}} L yesterday instead of {{triggerEvent.data.usual_liters}} L
+  usually", then close the water inlet valve if you have one.
+- **The morning report.** Scheduled trigger every day at 8 a.m.; action "Get the water
+  consumption"; message: "Yesterday: X L, this month: Y m³ (Z % against last month)".
+- **Empty house.** Scheduled trigger every morning; action "Get the water consumption";
+  conditions: the house is in away mode and `last_day_liters` is above 20 L; action: message
+  "Water ran yesterday while nobody was home".
+
+The dated values (daily consumption, index of the day) are filed in the history on the day of the
+reading: Gladys fires no "state changed" scene on a value dated in the past. To react to the
+consumption, use the trigger and the scene action above.
+
+## Refresh, quotas and history
+
+- The integration reads the distributor **three times a day** (every 8 hours), and tries again
+  within the hour when the website does not answer. The Gladys core does not always poll the
+  devices of external integrations (Gladys#3198): the integration refreshes itself.
+- Each read makes a few requests per meter (sign-in when needed, meter list, days of the month,
+  price and alerts or index). Neither Suez nor Saur publishes a quota: this pace is the one of the
+  equivalent Home Assistant integrations (two reads a day), and spares their servers. The "read
+  now" button is limited to once every quarter of an hour.
+- The session (the Suez cookie, the Saur token) is kept in `/data` to avoid a sign-in at every
+  read. A refused password is **not** tried again in a loop (it could lock your account): fix the
+  configuration or press the button.
+- On the first read, the integration reads **13 months** of history (for the year total and the
+  comparison with last year), then only the last days at each read (with a few days of overlap:
+  the distributors sometimes correct their latest figures). The days read are kept in `/data`
+  (two years at most).
 
 ## Troubleshooting
 
-The integration logs everything it does: check the integration logs from the
-Gladys UI (or `docker logs` on the host) with `LOG_LEVEL=debug` for the full
-detail.
+- **"refused the email or the password"**: sign in on the distributor's website with the same
+  credentials. If the website asks to change the password or to accept terms, do it first, then
+  save the configuration again.
+- **"cannot be reached for now"**: the distributor's website is under maintenance or down (it
+  happens in the evening and at weekends). The integration tries again on its own within the
+  hour.
+- **No meter found**: your customer area lists no remotely read meter, or the configured number
+  matches no meter (the message then gives the numbers of the account).
+- **"No recent value" on the daily consumption**: the last published day is more than two days
+  old. This is the distributor's delay; check on its website.
+- **A consumption peak does not show at once**: it shows the next day or the day after, when the
+  distributor publishes it.
+- **Logs**: in case of trouble, set `LOG_LEVEL=debug` to see each read. No password, cookie or
+  token is ever written there.
+
+## Limits
+
+- **Daily** data, a day or two late: no real time, no hourly consumption, no "night-time" leak
+  detection.
+- Average price and leak alert: **Suez only**. The Suez alerts concern the contract: on an account
+  with several meters, they are reported on each one.
+- The water consumption does not enter the energy tracking of Gladys 5.2 (electricity only).
+- The daily consumption, dated with the day used, fires no "device state" scene: use the trigger
+  and the scene action of the integration.
+- The integration reads the distributors' websites as your browser does, without an official API:
+  a change of the website can break it until an update.
+- **Developed without** a Suez or Saur account: the websites' answers come from the libraries and
+  the tests of the Home Assistant integrations, not from a real sign-in.
+
+## Credits and legal notice
+
+The Suez protocol comes from **pySuezV2** (jb101010-2/pySuez, Apache-2.0), the library of the Home
+Assistant `suez_water` integration (Apache-2.0). The Saur one comes from **saur_client**
+(cekage/Saur_fr_client, MIT) and from the **EyeOnSaur** integration (cekage/eyeonsaur-ha, MIT),
+whose test answers serve as fixtures. Thanks to their authors.
+
+Suez, Tout sur mon eau and Saur are trademarks of their owners. This independent integration is
+not affiliated with Suez or Saur.

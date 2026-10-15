@@ -2,3 +2,5 @@ node_modules/
 package-lock.json
 /data/
 *.log
+# Captured pages, kept byte for byte (escaped JSON the parser must read as is).
+test/fixtures/**/*.html
