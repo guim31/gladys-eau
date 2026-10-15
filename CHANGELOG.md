@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-10-15
+
 ### Added
 
 - Water consumption of the remotely read meters of Suez ("Tout sur mon eau")
@@ -31,4 +33,5 @@ the notes of the version's GitHub Release.
 - Texts in English, French, German and Spanish; documentation in the four
   languages.
 
-[Unreleased]: https://github.com/guim31/gladys-eau/commits/main
+[Unreleased]: https://github.com/guim31/gladys-eau/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/guim31/gladys-eau/releases/tag/v1.0.1

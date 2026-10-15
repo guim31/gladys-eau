@@ -1,6 +1,6 @@
 {
   "name": "gladys-eau",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Gladys Assistant integration: water consumption of the Suez and Saur meters (France).",
   "type": "module",
