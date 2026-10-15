@@ -1,67 +1,226 @@
-# Template de démonstration
+# Suez / Saur (eau)
 
-Ceci est la documentation utilisateur de l'intégration. Gladys ré-héberge ce
-fichier et affiche un lien **Documentation** permanent vers lui dans l'écran
-de configuration (dans la langue de l'utilisateur, avec l'anglais en repli) —
-c'est au moment de configurer que l'utilisateur en a le plus besoin. Gardez
-les courtes indications d'accueil dans les blocs `section` du `config_schema`
-du manifest ; mettez ici le pas-à-pas détaillé (captures d'écran, dépannage…).
+> **Développée sans compte client** (_Developed without an account: feedback welcome_) : cette
+> intégration a été écrite et testée sans compte Suez ni Saur réel, à partir des bibliothèques
+> libres qui servent déjà à Home Assistant. Si vous l'essayez, vos retours sur le forum Gladys
+> sont précieux, qu'elle marche du premier coup ou non.
+>
+> Cette intégration n'est ni affiliée à Suez ni à Saur, ni approuvée par eux (_not affiliated
+> with Suez or Saur_).
 
-## Ce que vous obtenez
+## Présentation
 
-Six appareils de démonstration apparaissent après l'installation : une
-station météo (vraies données Open-Meteo), un interrupteur, une lampe
-variable, une prise connectée avec mesure de puissance, un détecteur de
-mouvement et une caméra.
+Suivez dans Gladys la consommation d'eau relevée par votre compteur, telle que votre distributeur
+la publie dans votre espace client :
+
+- **Suez**, espace client « Tout sur mon eau » (toutsurmoneau.fr) ;
+- **Saur**, « Mon espace client » (mon-espace.saurclient.fr).
+
+Pour chaque compteur, vous obtenez dans Gladys :
+
+- la **consommation de chaque jour**, en litres, rangée dans l'historique au jour où l'eau a été
+  consommée ;
+- l'**index du compteur**, en m³ ;
+- la **consommation du mois** et **de l'année** en cours, en m³ ;
+- avec Suez, le **prix moyen de l'eau** (€/m³) et l'**alerte fuite** envoyée par Suez ;
+- un **déclencheur de scène** « Consommation d'eau anormale », une fois par épisode ;
+- une **action de scène** qui donne les chiffres du compteur, pour un message ou une condition ;
+- un **widget** de tableau de bord : hier, ce mois-ci, et la comparaison avec le mois dernier et
+  l'an dernier.
+
+Les données arrivent **avec un ou deux jours de retard** : le compteur télérelevé envoie ses
+mesures au distributeur, qui les publie le lendemain (parfois le surlendemain). Ce n'est pas un
+suivi en temps réel.
+
+## Prérequis
+
+- Gladys **5.1.0** ou plus récent.
+- Un **compteur d'eau télérelevé** (radio) : sans télérelève, l'espace client ne montre qu'un
+  index relevé deux fois par an, et l'intégration n'a rien de quotidien à vous montrer.
+- Un **espace client en ligne** actif chez votre distributeur, avec son adresse e-mail et son mot
+  de passe. Vérifiez d'abord que vous voyez bien votre consommation jour par jour sur le site :
+  si le site ne l'affiche pas, l'intégration ne la verra pas non plus.
+- Gladys doit pouvoir sortir sur Internet (l'intégration interroge le site du distributeur).
+
+Le nom du distributeur figure sur votre facture d'eau. Si vous êtes desservi par une régie
+municipale, Veolia ou un autre distributeur, cette intégration ne vous concerne pas : regardez
+les autres intégrations eau du store (Veolia, Agur…).
 
 ## Configuration
 
-1. Ouvrez l'onglet **Configuration** de l'intégration.
-2. Renseignez la **latitude** et la **longitude** que la station météo de
-   démonstration doit observer (Paris par défaut), et choisissez votre unité
-   de température. L'**intervalle de rafraîchissement** règle la fréquence
-   de lecture de la station météo et de la puissance de la prise : toutes
-   les 5 minutes par défaut, toutes les minutes au plus.
-3. Enregistrez : les appareils apparaissent dans l'onglet **Découverte**,
-   prêts à être ajoutés.
+Dans **Intégrations → Suez / Saur (eau) → Configuration** :
 
-Le réglage **Préférer la connexion locale** pilote la prise de
-démonstration : elle affiche en badge le canal réellement utilisé (local ou
-cloud), avec un point orange quand elle fonctionne en mode dégradé (local
-refusé, bascule cloud).
+| Champ                 | Rôle                                                                                                                                                                        |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Distributeur d'eau    | Suez ou Saur.                                                                                                                                                               |
+| Adresse e-mail        | Celle de votre espace client.                                                                                                                                               |
+| Mot de passe          | Celui de votre espace client. Il est gardé par Gladys et n'apparaît jamais dans les journaux.                                                                               |
+| Numéro de compteur    | Facultatif. Laissez vide pour suivre tous les compteurs du compte. Sinon, le numéro de compteur ou de point de livraison de la facture (les espaces sont ignorés).          |
+| Consommation anormale | Le seuil du déclencheur « consommation anormale » : le double, le triple (par défaut) ou cinq fois votre consommation habituelle, ou seulement les alertes du distributeur. |
+| Langue des textes     | Langue des noms de fonctionnalités et des messages (français par défaut). Les noms sont figés quand vous ajoutez le compteur : choisissez la langue avant.                  |
 
-## Actions
+Enregistrez : l'intégration se connecte aussitôt. Le bouton **Se connecter et relever
+maintenant** refait une lecture à la demande (pas plus d'une fois par quart d'heure) et vous dit
+ce qu'il a trouvé.
 
-- **Tester le fournisseur météo** — effectue une requête en direct vers
-  Open-Meteo et affiche la température et l'humidité actuelles sous le
-  bouton.
-- **Identifier un appareil** — choisissez un de vos appareils dans la liste
-  et il se signale (la lampe de démonstration « clignote » dans les logs).
+Ensuite, dans l'onglet **Découverte**, ajoutez le ou les compteurs proposés. À l'ajout,
+l'intégration envoie à Gladys l'historique déjà lu : **13 mois** de consommation jour par jour.
+Cet envoi prend quelques minutes (Gladys limite le nombre de valeurs reçues par minute) et se
+fait en arrière-plan.
 
-## Scènes
+## Le compteur d'eau
 
-L'intégration ajoute ses propres cartes à l'éditeur de scènes (Gladys 5.1
-ou plus récent), dans la catégorie **Intégrations** :
+Chaque compteur devient un appareil « Compteur d'eau Suez 19ZZ123456 » (ou Saur). Son identifiant
+dans Gladys vient du **point de livraison** donné par le distributeur, pas du numéro de série :
+si le distributeur change votre compteur, l'appareil, son historique et vos scènes restent.
 
-- **Mouvement détecté** (déclencheur) — lance la scène quand un détecteur
-  de démonstration voit bouger quelque chose. Choisissez éventuellement le
-  détecteur et ce qui a bougé (personne, animal) ; laissés vides, toute
-  détection correspond. Les actions suivantes peuvent lire ce qui a bougé
-  avec `{{triggerEvent.data.target}}`.
-- **Identifier un appareil** (action) — fait se signaler l'appareil choisi.
-  Elle indique si l'appareil a pu se signaler, pour que les actions
-  suivantes puissent en dépendre.
+| Fonctionnalité             | Unité | Contenu                                                                                                                                 |
+| -------------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Index du compteur          | m³    | Le dernier index connu, daté du jour de sa lecture.                                                                                     |
+| Consommation journalière   | L     | Une valeur par jour, rangée dans l'historique **au jour consommé** (à midi). C'est la courbe à regarder pour suivre votre consommation. |
+| Consommation du mois       | m³    | Le total du mois civil en cours, sur les jours déjà publiés. Le 1er du mois, il repart de zéro en attendant les premières données.      |
+| Consommation de l'année    | m³    | Le total depuis le 1er janvier.                                                                                                         |
+| Prix moyen de l'eau (€/m³) | €     | **Suez seulement** : le prix moyen du m³ (abonnement et taxes compris) indiqué par Suez pour votre contrat ou votre commune.            |
+| Alerte fuite (Suez)        | —     | **Suez seulement** : 1 quand Suez signale une fuite sur votre espace client, 0 sinon.                                                   |
 
-## Tableau de bord
+Saur ne publie ni prix ni alerte fuite par cette voie : un compteur Saur n'a que les quatre
+premières fonctionnalités.
 
-Ajoutez le widget **État de la démo** à un tableau de bord : il affiche en
-direct la température de la station météo et la puissance de la prise du
-bureau, la connexion utilisée par la prise (en orange si dégradée) et la
-position observée. Son bouton **Identifier la lampe** fait se signaler la
-lampe de démonstration.
+Le suivi d'énergie de Gladys 5.2 ne traite que l'électricité (le cœur refuse encore un contrat
+« eau ») : la consommation d'eau n'y entre donc pas, elle reste un capteur de volume avec son
+historique, comme dans les intégrations Veolia et Agur.
+
+## Widget
+
+Le widget **Consommation d'eau** (choisissez le compteur dans ses réglages, sinon le premier
+compteur est pris) montre :
+
+- la date des dernières données publiées ;
+- la consommation **d'hier** (ou du dernier jour connu), en litres ;
+- la consommation **du mois** en cours, en m³ ;
+- l'écart, en pourcentage, avec **les mêmes jours du mois dernier** et avec **le même mois de
+  l'an dernier** (orange au-delà de +20 %, vert quand vous consommez moins) ;
+- les 14 derniers jours en barres ;
+- l'année en cours, le prix moyen (Suez) et, s'il y en a une, l'alerte en cours.
+
+La comparaison s'arrête au dernier jour connu : le 13 du mois, elle compare du 1er au 13 avec du
+1er au 13. Elle n'est affichée que si la période de référence est connue à 80 % au moins.
+
+## Déclencheur de scène
+
+**Consommation d'eau anormale** (`abnormal_consumption`) se déclenche **une fois par épisode**,
+quand l'une de ces conditions apparaît :
+
+- **Alerte fuite du distributeur** (`leak_alert`) : Suez signale une fuite ;
+- **Alerte surconsommation** (`overconsumption_alert`) : Suez signale une surconsommation ;
+- **Jours bien au-dessus de l'habitude** (`unusual_consumption`) : les trois derniers jours connus,
+  à la suite, dépassent chacun le seuil choisi (le triple par défaut) de votre consommation
+  habituelle, et d'au moins 100 litres. La consommation habituelle est la médiane des 28 jours
+  précédents.
+
+L'épisode se termine quand plus rien d'anormal ne reste ; un nouvel épisode déclenchera à
+nouveau. Un redémarrage de Gladys ne redéclenche pas un épisode en cours.
+
+Filtres : le compteur, la raison. Variables utilisables dans la scène : `reason` (la raison),
+`provider` (Suez ou Saur), `date` (jour du relevé), `liters` (litres ce jour-là), `usual_liters`
+(litres habituels par jour).
+
+Pourquoi trois jours, et pas « de l'eau qui coule la nuit » ? Suez et Saur ne publient qu'un
+chiffre par jour par ces API : impossible de voir une consommation nocturne continue. Une chasse
+d'eau qui fuit ou un tuyau percé se voit, en données journalières, comme plusieurs jours de suite
+très au-dessus de la normale. Un seul gros jour (remplir une piscine, arroser) ne déclenche pas.
+L'alerte fuite de Suez, elle, est calculée par Suez sur les données fines du compteur.
+
+## Action de scène
+
+**Obtenir la consommation d'eau** (`get_water_summary`) : choisissez le compteur ; l'action rend
+pour la suite de la scène :
+
+| Sortie                          | Contenu                                          |
+| ------------------------------- | ------------------------------------------------ |
+| `last_date`                     | Dernier jour connu (AAAA-MM-JJ)                  |
+| `last_day_liters`               | Litres ce jour-là                                |
+| `month_m3`                      | Consommation du mois en cours (m³)               |
+| `year_m3`                       | Consommation de l'année en cours (m³)            |
+| `index_m3`                      | Index du compteur (m³)                           |
+| `previous_month_change_percent` | Écart avec les mêmes jours du mois dernier (%)   |
+| `last_year_change_percent`      | Écart avec le même mois de l'an dernier (%)      |
+| `abnormal`                      | Vrai pendant un épisode de consommation anormale |
+
+Une valeur inconnue (pas encore d'historique pour comparer, par exemple) est laissée vide plutôt
+que mise à zéro.
+
+## Exemples de scènes
+
+- **Fuite suspectée → coupure et message.** Déclencheur « Consommation d'eau anormale », raison
+  « Alerte fuite du distributeur » ou « Jours bien au-dessus de l'habitude » ; actions : envoyer
+  « Fuite d'eau suspectée : {{triggerEvent.data.liters}} L hier au lieu de
+  {{triggerEvent.data.usual_liters}} L habituellement », puis fermer l'électrovanne d'arrivée
+  d'eau si vous en avez une.
+- **Le bilan du matin.** Déclencheur horaire tous les jours à 8 h ; action « Obtenir la
+  consommation d'eau » ; message : « Hier : X L, ce mois-ci : Y m³ (Z % par rapport au mois
+  dernier) ».
+- **Maison vide.** Déclencheur horaire tous les matins ; action « Obtenir la consommation
+  d'eau » ; conditions : la maison est en mode absent et `last_day_liters` dépasse 20 L ; action :
+  message « De l'eau a coulé hier alors que personne n'était là ».
+
+Les valeurs datées (consommation journalière, index du jour) sont rangées dans l'historique au
+jour du relevé : Gladys ne déclenche pas de scène « changement d'état » sur une valeur datée du
+passé. Pour réagir à la consommation, passez par le déclencheur et l'action de scène ci-dessus.
+
+## Rafraîchissement, quotas et historique
+
+- L'intégration lit le distributeur **trois fois par jour** (toutes les 8 heures), et réessaie
+  dans l'heure si le site ne répond pas. Le cœur de Gladys ne sonde pas toujours les appareils
+  des intégrations externes (Gladys#3198) : c'est l'intégration qui se rafraîchit elle-même.
+- Chaque lecture fait quelques requêtes par compteur (connexion si besoin, liste des compteurs,
+  jours du mois, prix et alertes ou index). Ni Suez ni Saur ne publient de quota : ce rythme est
+  celui des intégrations Home Assistant équivalentes (deux lectures par jour), et ménage leurs
+  serveurs. Le bouton « relever maintenant » est limité à une fois par quart d'heure.
+- La session (le cookie de Suez, le jeton de Saur) est gardée dans `/data` pour éviter une
+  connexion à chaque lecture. Un mot de passe refusé n'est **pas** réessayé en boucle (cela
+  pourrait bloquer votre compte) : corrigez la configuration ou appuyez sur le bouton.
+- À la première lecture, l'intégration lit **13 mois** d'historique (pour le total de l'année et
+  la comparaison avec l'an dernier), puis seulement les derniers jours à chaque lecture (avec
+  quelques jours de recouvrement : les distributeurs corrigent parfois leurs derniers chiffres).
+  Les jours lus sont gardés dans `/data` (deux ans au plus).
 
 ## Dépannage
 
-L'intégration journalise tout ce qu'elle fait : consultez les logs de
-l'intégration depuis l'interface Gladys (ou `docker logs` sur l'hôte) avec
-`LOG_LEVEL=debug` pour le détail complet.
+- **« refuse l'adresse e-mail ou le mot de passe »** : connectez-vous sur le site du distributeur
+  avec les mêmes identifiants. Si le site demande de changer le mot de passe ou d'accepter des
+  conditions, faites-le d'abord, puis enregistrez à nouveau la configuration.
+- **« injoignable pour l'instant »** : le site du distributeur est en maintenance ou en panne
+  (cela arrive le soir et le week-end). L'intégration réessaie toute seule dans l'heure.
+- **Aucun compteur trouvé** : votre espace client ne liste pas de compteur télérelevé, ou le
+  numéro configuré ne correspond à aucun compteur (le message donne alors les numéros du compte).
+- **« Pas de valeur récente » sur la consommation journalière** : la dernière journée publiée a
+  plus de deux jours. C'est le retard du distributeur ; vérifiez sur son site.
+- **Un pic de consommation n'apparaît pas tout de suite** : il apparaît le lendemain ou le
+  surlendemain, quand le distributeur le publie.
+- **Journaux** : en cas de souci, passez la variable `LOG_LEVEL=debug` pour voir chaque lecture.
+  Aucun mot de passe, cookie ni jeton n'y est écrit.
+
+## Limites
+
+- Données **journalières**, avec un à deux jours de retard : pas de temps réel, pas de
+  consommation heure par heure, pas de détection de fuite « la nuit ».
+- Prix moyen et alerte fuite : **Suez seulement**. Les alertes Suez concernent le contrat : sur un
+  compte à plusieurs compteurs, elles sont reportées sur chacun.
+- La consommation d'eau n'entre pas dans le suivi d'énergie de Gladys 5.2 (électricité seulement).
+- La consommation journalière, datée du jour consommé, ne déclenche pas les scènes « état d'un
+  appareil » : utilisez le déclencheur et l'action de scène de l'intégration.
+- L'intégration lit les sites des distributeurs comme le fait votre navigateur, sans API
+  officielle : un changement du site peut la casser jusqu'à une mise à jour.
+- **Développée sans compte** Suez ni Saur : les réponses des sites sont reprises des bibliothèques
+  et des tests des intégrations Home Assistant, pas d'une vraie connexion.
+
+## Crédits et mentions
+
+Le protocole de Suez vient de **pySuezV2** (jb101010-2/pySuez, Apache-2.0), la bibliothèque de
+l'intégration Home Assistant `suez_water` (Apache-2.0). Celui de Saur vient de **saur_client**
+(cekage/Saur_fr_client, MIT) et de l'intégration **EyeOnSaur** (cekage/eyeonsaur-ha, MIT), dont
+les réponses de test servent de fixtures. Merci à leurs auteurs.
+
+Suez, Tout sur mon eau et Saur sont des marques de leurs propriétaires. Cette intégration
+indépendante n'est ni affiliée à Suez ni à Saur (_not affiliated with Suez or Saur_).

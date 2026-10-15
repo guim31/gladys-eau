@@ -1,177 +1,533 @@
 {
   "manifest_version": 1,
   "type": "device",
-  "name": "Demo Devices Template",
+  "name": "Suez / Saur (eau)",
   "description": {
-    "en": "Starter template showing sensors, a switch, a dimmable light and a smart plug.",
-    "fr": "Template de démarrage : capteurs, interrupteur, lampe variable et prise connectée."
+    "en": "Daily water consumption from the Suez and Saur meters, with leak and overuse alerts.",
+    "fr": "Consommation d’eau quotidienne des compteurs Suez et Saur, avec alertes fuite et surconsommation.",
+    "de": "Täglicher Wasserverbrauch der Suez- und Saur-Zähler, mit Leck- und Mehrverbrauchsalarm.",
+    "es": "Consumo diario de agua de los contadores Suez y Saur, con alertas de fuga y sobreconsumo."
   },
   "version": "1.0.0",
-  "docker_image": "ghcr.io/gladysassistant/integration-template-js:1.0.0",
+  "docker_image": "ghcr.io/guim31/gladys-eau:1.0.0",
   "gladys_version": ">=5.1.0",
-  "cover_image": "https://raw.githubusercontent.com/GladysAssistant/integration-template-js/master/cover.png",
-  "categories": ["lighting", "security", "environment"],
-  "transports": ["local", "cloud"],
+  "cover_image": "https://raw.githubusercontent.com/guim31/gladys-eau/main/cover.png",
+  "categories": ["energy"],
+  "transports": ["cloud"],
   "config_schema": [
     {
       "key": "intro",
       "type": "section",
-      "label": { "en": "Getting started", "fr": "Pour commencer" },
+      "label": {
+        "en": "Your water customer area",
+        "fr": "Votre espace client eau",
+        "de": "Dein Kundenkonto Wasser",
+        "es": "Su área de cliente de agua"
+      },
       "description": {
-        "en": "The demo weather station reads real data from the free Open-Meteo API: pick the coordinates to observe. No account, no API key.",
-        "fr": "La station météo de démonstration lit de vraies données via l'API gratuite Open-Meteo : choisissez les coordonnées à observer. Pas de compte, pas de clé d'API."
+        "en": "Use the email and password of your online customer area: Tout sur mon eau for Suez, Mon espace client for Saur. Your meter must be read remotely.",
+        "fr": "Utilisez l’adresse e-mail et le mot de passe de votre espace client en ligne : Tout sur mon eau pour Suez, Mon espace client pour Saur. Votre compteur doit être télérelevé.",
+        "de": "Nutze E-Mail-Adresse und Passwort deines Online-Kundenkontos: Tout sur mon eau für Suez, Mon espace client für Saur. Dein Zähler muss fernausgelesen werden.",
+        "es": "Use el correo y la contraseña de su área de cliente en línea: Tout sur mon eau para Suez, Mon espace client para Saur. Su contador debe tener telelectura."
       },
       "links": [
         {
-          "url": "https://open-meteo.com/en/docs",
-          "label": { "en": "Open-Meteo documentation", "fr": "Documentation Open-Meteo" }
+          "url": "https://www.toutsurmoneau.fr/mon-compte-en-ligne/je-me-connecte",
+          "label": {
+            "en": "Tout sur mon eau (Suez)",
+            "fr": "Tout sur mon eau (Suez)",
+            "de": "Tout sur mon eau (Suez)",
+            "es": "Tout sur mon eau (Suez)"
+          }
+        },
+        {
+          "url": "https://mon-espace.saurclient.fr/",
+          "label": {
+            "en": "Mon espace client (Saur)",
+            "fr": "Mon espace client (Saur)",
+            "de": "Mon espace client (Saur)",
+            "es": "Mon espace client (Saur)"
+          }
         }
       ]
     },
     {
-      "key": "latitude",
-      "type": "number",
-      "label": { "en": "Latitude", "fr": "Latitude" },
-      "description": {
-        "en": "Latitude used for the demo weather sensor.",
-        "fr": "Latitude utilisée par le capteur météo de démonstration."
-      },
-      "placeholder": { "en": "e.g. 48.8566", "fr": "ex. 48.8566" },
-      "required": true,
-      "default": 48.8566,
-      "min": -90,
-      "max": 90
-    },
-    {
-      "key": "longitude",
-      "type": "number",
-      "label": { "en": "Longitude", "fr": "Longitude" },
-      "description": {
-        "en": "Longitude used for the demo weather sensor.",
-        "fr": "Longitude utilisée par le capteur météo de démonstration."
-      },
-      "placeholder": { "en": "e.g. 2.3522", "fr": "ex. 2.3522" },
-      "required": true,
-      "default": 2.3522,
-      "min": -180,
-      "max": 180
-    },
-    {
-      "key": "unit",
+      "key": "provider",
       "type": "select",
-      "label": { "en": "Temperature unit", "fr": "Unité de température" },
-      "required": false,
-      "default": "celsius",
+      "required": true,
+      "label": {
+        "en": "Water distributor",
+        "fr": "Distributeur d’eau",
+        "de": "Wasserversorger",
+        "es": "Distribuidor de agua"
+      },
+      "description": {
+        "en": "The company that bills your water (written on the bill).",
+        "fr": "L’entreprise qui vous facture l’eau (indiquée sur la facture).",
+        "de": "Das Unternehmen, das dir das Wasser berechnet (steht auf der Rechnung).",
+        "es": "La empresa que le factura el agua (figura en la factura)."
+      },
       "options": [
-        { "value": "celsius", "label": { "en": "Celsius", "fr": "Celsius" } },
-        { "value": "fahrenheit", "label": { "en": "Fahrenheit", "fr": "Fahrenheit" } }
+        {
+          "value": "suez",
+          "label": {
+            "en": "Suez",
+            "fr": "Suez",
+            "de": "Suez",
+            "es": "Suez"
+          }
+        },
+        {
+          "value": "saur",
+          "label": {
+            "en": "Saur",
+            "fr": "Saur",
+            "de": "Saur",
+            "es": "Saur"
+          }
+        }
       ]
     },
     {
-      "key": "poll_frequency",
-      "type": "number",
-      "label": { "en": "Refresh interval (s)", "fr": "Intervalle de rafraîchissement (s)" },
-      "description": {
-        "en": "How often sensors are polled, in seconds (one minute minimum).",
-        "fr": "Fréquence d'interrogation des capteurs, en secondes (une minute minimum)."
+      "key": "username",
+      "type": "string",
+      "required": true,
+      "label": {
+        "en": "Email",
+        "fr": "Adresse e-mail",
+        "de": "E-Mail-Adresse",
+        "es": "Correo electrónico"
       },
+      "placeholder": {
+        "en": "e.g. name@example.com",
+        "fr": "ex. nom@exemple.fr",
+        "de": "z. B. name@beispiel.de",
+        "es": "p. ej. nombre@ejemplo.es"
+      }
+    },
+    {
+      "key": "password",
+      "type": "secret",
+      "required": true,
+      "label": {
+        "en": "Password",
+        "fr": "Mot de passe",
+        "de": "Passwort",
+        "es": "Contraseña"
+      }
+    },
+    {
+      "key": "meter",
+      "type": "string",
       "required": false,
-      "default": 300,
-      "min": 60,
-      "max": 3600
+      "label": {
+        "en": "Meter number (optional)",
+        "fr": "Numéro de compteur (facultatif)",
+        "de": "Zählernummer (optional)",
+        "es": "Número de contador (opcional)"
+      },
+      "description": {
+        "en": "Leave empty to follow every meter of the account. Otherwise the meter number or the delivery point number of the bill.",
+        "fr": "Laissez vide pour suivre tous les compteurs du compte. Sinon, le numéro de compteur ou de point de livraison de la facture.",
+        "de": "Leer lassen, um alle Zähler des Kontos zu verfolgen. Sonst die Zähler- oder Lieferstellennummer der Rechnung.",
+        "es": "Déjelo vacío para seguir todos los contadores de la cuenta. Si no, el número de contador o de punto de suministro de la factura."
+      },
+      "placeholder": {
+        "en": "e.g. 12345678",
+        "fr": "ex. 12345678",
+        "de": "z. B. 12345678",
+        "es": "p. ej. 12345678"
+      }
+    },
+    {
+      "key": "abnormal_threshold",
+      "type": "select",
+      "required": false,
+      "default": "3",
+      "label": {
+        "en": "Abnormal consumption",
+        "fr": "Consommation anormale",
+        "de": "Ungewöhnlicher Verbrauch",
+        "es": "Consumo anormal"
+      },
+      "description": {
+        "en": "Three days in a row at this multiple of your usual daily consumption make an alert, beside the distributor's own alerts.",
+        "fr": "Trois jours de suite à ce multiple de votre consommation habituelle déclenchent une alerte, en plus des alertes du distributeur.",
+        "de": "Drei Tage in Folge mit diesem Vielfachen deines üblichen Tagesverbrauchs lösen einen Alarm aus, zusätzlich zu den Alarmen des Versorgers.",
+        "es": "Tres días seguidos con este múltiplo de su consumo habitual generan una alerta, además de las alertas del distribuidor."
+      },
+      "options": [
+        {
+          "value": "2",
+          "label": {
+            "en": "Twice the usual (sensitive)",
+            "fr": "Le double de l’habitude (sensible)",
+            "de": "Das Doppelte des Üblichen (empfindlich)",
+            "es": "El doble de lo habitual (sensible)"
+          }
+        },
+        {
+          "value": "3",
+          "label": {
+            "en": "Three times the usual",
+            "fr": "Le triple de l’habitude",
+            "de": "Das Dreifache des Üblichen",
+            "es": "El triple de lo habitual"
+          }
+        },
+        {
+          "value": "5",
+          "label": {
+            "en": "Five times the usual (tolerant)",
+            "fr": "Cinq fois l’habitude (tolérant)",
+            "de": "Das Fünffache des Üblichen (tolerant)",
+            "es": "Cinco veces lo habitual (tolerante)"
+          }
+        },
+        {
+          "value": "off",
+          "label": {
+            "en": "Distributor alerts only",
+            "fr": "Alertes du distributeur seulement",
+            "de": "Nur Alarme des Versorgers",
+            "es": "Solo alertas del distribuidor"
+          }
+        }
+      ]
+    },
+    {
+      "key": "language",
+      "type": "select",
+      "required": false,
+      "default": "fr",
+      "label": {
+        "en": "Language of the texts",
+        "fr": "Langue des textes",
+        "de": "Sprache der Texte",
+        "es": "Idioma de los textos"
+      },
+      "description": {
+        "en": "Language of the feature names (fixed when the meter is added) and of the messages.",
+        "fr": "Langue des noms de fonctionnalités (figés à l’ajout du compteur) et des messages.",
+        "de": "Sprache der Funktionsnamen (beim Hinzufügen des Zählers festgelegt) und der Meldungen.",
+        "es": "Idioma de los nombres de funciones (fijados al añadir el contador) y de los mensajes."
+      },
+      "options": [
+        {
+          "value": "en",
+          "label": {
+            "en": "English",
+            "fr": "English",
+            "de": "English",
+            "es": "English"
+          }
+        },
+        {
+          "value": "fr",
+          "label": {
+            "en": "Français",
+            "fr": "Français",
+            "de": "Français",
+            "es": "Français"
+          }
+        },
+        {
+          "value": "de",
+          "label": {
+            "en": "Deutsch",
+            "fr": "Deutsch",
+            "de": "Deutsch",
+            "es": "Deutsch"
+          }
+        },
+        {
+          "value": "es",
+          "label": {
+            "en": "Español",
+            "fr": "Español",
+            "de": "Español",
+            "es": "Español"
+          }
+        }
+      ]
     }
   ],
   "actions": [
     {
-      "key": "test_weather",
-      "label": { "en": "Test the weather provider", "fr": "Tester le fournisseur météo" },
-      "timeout_seconds": 30
-    },
-    {
-      "key": "identify",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "fields": [
-        {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
-          "required": true
-        }
-      ]
+      "key": "refresh_now",
+      "label": {
+        "en": "Sign in and read now",
+        "fr": "Se connecter et relever maintenant",
+        "de": "Jetzt anmelden und ablesen",
+        "es": "Conectar y leer ahora"
+      },
+      "timeout_seconds": 110
     }
   ],
   "scene_triggers": [
     {
-      "key": "motion_detected",
-      "label": { "en": "Motion detected", "fr": "Mouvement détecté" },
+      "key": "abnormal_consumption",
+      "label": {
+        "en": "Abnormal water consumption",
+        "fr": "Consommation d’eau anormale",
+        "de": "Ungewöhnlicher Wasserverbrauch",
+        "es": "Consumo de agua anormal"
+      },
       "description": {
-        "en": "A demo motion sensor saw a person or an animal move.",
-        "fr": "Un détecteur de démonstration a vu bouger une personne ou un animal."
+        "en": "Leak suspected: an alert from the distributor, or several days far above usual. Once per episode.",
+        "fr": "Fuite suspectée : alerte du distributeur, ou plusieurs jours bien au-dessus de l’habitude. Une fois par épisode.",
+        "de": "Leck vermutet: Alarm des Versorgers oder mehrere Tage weit über dem Üblichen. Einmal pro Episode.",
+        "es": "Fuga sospechada: alerta del distribuidor o varios días muy por encima de lo habitual. Una vez por episodio."
       },
       "fields": [
         {
           "key": "device",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Sensor", "fr": "Détecteur" }
+          "label": {
+            "en": "Water meter",
+            "fr": "Compteur d’eau",
+            "de": "Wasserzähler",
+            "es": "Contador de agua"
+          }
         },
         {
-          "key": "target",
+          "key": "reason",
           "type": "multi_select",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" },
+          "label": {
+            "en": "Reason",
+            "fr": "Raison",
+            "de": "Grund",
+            "es": "Motivo"
+          },
           "options": [
-            { "value": "person", "label": { "en": "Person", "fr": "Personne" } },
-            { "value": "animal", "label": { "en": "Animal", "fr": "Animal" } }
+            {
+              "value": "leak_alert",
+              "label": {
+                "en": "Distributor leak alert",
+                "fr": "Alerte fuite du distributeur",
+                "de": "Leckalarm des Versorgers",
+                "es": "Alerta de fuga del distribuidor"
+              }
+            },
+            {
+              "value": "overconsumption_alert",
+              "label": {
+                "en": "Distributor overuse alert",
+                "fr": "Alerte surconsommation",
+                "de": "Mehrverbrauchsalarm",
+                "es": "Alerta de sobreconsumo"
+              }
+            },
+            {
+              "value": "unusual_consumption",
+              "label": {
+                "en": "Days far above usual",
+                "fr": "Jours bien au-dessus de l’habitude",
+                "de": "Tage weit über dem Üblichen",
+                "es": "Días muy por encima de lo habitual"
+              }
+            }
           ]
         }
       ],
       "variables": [
         {
-          "key": "target",
+          "key": "reason",
           "type": "string",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" }
+          "label": {
+            "en": "Reason",
+            "fr": "Raison",
+            "de": "Grund",
+            "es": "Motivo"
+          }
+        },
+        {
+          "key": "provider",
+          "type": "string",
+          "label": {
+            "en": "Distributor",
+            "fr": "Distributeur",
+            "de": "Versorger",
+            "es": "Distribuidor"
+          }
+        },
+        {
+          "key": "date",
+          "type": "string",
+          "label": {
+            "en": "Day of the reading",
+            "fr": "Jour du relevé",
+            "de": "Tag der Ablesung",
+            "es": "Día de la lectura"
+          }
+        },
+        {
+          "key": "liters",
+          "type": "number",
+          "label": {
+            "en": "Litres that day",
+            "fr": "Litres ce jour-là",
+            "de": "Liter an diesem Tag",
+            "es": "Litros ese día"
+          }
+        },
+        {
+          "key": "usual_liters",
+          "type": "number",
+          "label": {
+            "en": "Usual litres per day",
+            "fr": "Litres habituels par jour",
+            "de": "Übliche Liter pro Tag",
+            "es": "Litros habituales por día"
+          }
         }
       ]
     }
   ],
   "scene_actions": [
     {
-      "key": "identify_device",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "description": {
-        "en": "Make a device signal itself (the demo light blinks).",
-        "fr": "Fait se signaler un appareil (la lampe de démonstration clignote)."
+      "key": "get_water_summary",
+      "label": {
+        "en": "Get the water consumption",
+        "fr": "Obtenir la consommation d’eau",
+        "de": "Wasserverbrauch abrufen",
+        "es": "Obtener el consumo de agua"
       },
-      "timeout_seconds": 15,
+      "description": {
+        "en": "The last known day, the month and the year so far, and the comparisons, for a message or a condition.",
+        "fr": "Dernier jour connu, mois et année en cours, et comparaisons, pour un message ou une condition.",
+        "de": "Letzter bekannter Tag, laufender Monat und laufendes Jahr sowie Vergleiche, für eine Nachricht oder Bedingung.",
+        "es": "Último día conocido, mes y año en curso y comparaciones, para un mensaje o una condición."
+      },
+      "timeout_seconds": 10,
       "fields": [
         {
-          "key": "device",
+          "key": "meter",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
+          "label": {
+            "en": "Water meter",
+            "fr": "Compteur d’eau",
+            "de": "Wasserzähler",
+            "es": "Contador de agua"
+          },
           "required": true
         }
       ],
       "outputs": [
         {
-          "key": "signalled",
+          "key": "last_date",
+          "type": "string",
+          "label": {
+            "en": "Last known day",
+            "fr": "Dernier jour connu",
+            "de": "Letzter bekannter Tag",
+            "es": "Último día conocido"
+          }
+        },
+        {
+          "key": "last_day_liters",
+          "type": "number",
+          "label": {
+            "en": "Litres that day",
+            "fr": "Litres ce jour-là",
+            "de": "Liter an diesem Tag",
+            "es": "Litros ese día"
+          }
+        },
+        {
+          "key": "month_m3",
+          "type": "number",
+          "label": {
+            "en": "This month (m³)",
+            "fr": "Ce mois-ci (m³)",
+            "de": "Dieser Monat (m³)",
+            "es": "Este mes (m³)"
+          }
+        },
+        {
+          "key": "year_m3",
+          "type": "number",
+          "label": {
+            "en": "This year (m³)",
+            "fr": "Cette année (m³)",
+            "de": "Dieses Jahr (m³)",
+            "es": "Este año (m³)"
+          }
+        },
+        {
+          "key": "index_m3",
+          "type": "number",
+          "label": {
+            "en": "Meter index (m³)",
+            "fr": "Index du compteur (m³)",
+            "de": "Zählerstand (m³)",
+            "es": "Índice del contador (m³)"
+          }
+        },
+        {
+          "key": "previous_month_change_percent",
+          "type": "number",
+          "label": {
+            "en": "Change vs last month (%)",
+            "fr": "Écart avec le mois dernier (%)",
+            "de": "Abweichung ggü. Vormonat (%)",
+            "es": "Diferencia con el mes pasado (%)"
+          }
+        },
+        {
+          "key": "last_year_change_percent",
+          "type": "number",
+          "label": {
+            "en": "Change vs last year (%)",
+            "fr": "Écart avec l’an dernier (%)",
+            "de": "Abweichung ggü. Vorjahr (%)",
+            "es": "Diferencia con el año pasado (%)"
+          }
+        },
+        {
+          "key": "abnormal",
           "type": "boolean",
-          "label": { "en": "Device signalled", "fr": "Appareil signalé" }
+          "label": {
+            "en": "Abnormal consumption",
+            "fr": "Consommation anormale",
+            "de": "Ungewöhnlicher Verbrauch",
+            "es": "Consumo anormal"
+          }
         }
       ]
     }
   ],
   "widgets": [
     {
-      "key": "demo_status",
-      "label": { "en": "Demo status", "fr": "État de la démo" },
-      "description": {
-        "en": "Live temperature and plug power, plug connection and observed location.",
-        "fr": "Température et puissance en direct, connexion de la prise, position observée."
+      "key": "water_summary",
+      "label": {
+        "en": "Water consumption",
+        "fr": "Consommation d’eau",
+        "de": "Wasserverbrauch",
+        "es": "Consumo de agua"
       },
-      "icon": "activity",
-      "action_timeout_seconds": 15
+      "description": {
+        "en": "Yesterday, this month, and the comparison with last month and last year.",
+        "fr": "Hier, ce mois-ci, et la comparaison avec le mois dernier et l’an dernier.",
+        "de": "Gestern, dieser Monat und der Vergleich mit Vormonat und Vorjahr.",
+        "es": "Ayer, este mes y la comparación con el mes pasado y el año pasado."
+      },
+      "icon": "droplet",
+      "settings": [
+        {
+          "key": "meter",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Water meter",
+            "fr": "Compteur d’eau",
+            "de": "Wasserzähler",
+            "es": "Contador de agua"
+          }
+        }
+      ]
     }
   ]
 }
