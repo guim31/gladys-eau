@@ -35,7 +35,7 @@ Das ist keine Echtzeit-Überwachung.
 
 ## Voraussetzungen
 
-- Gladys **5.1.0** oder neuer.
+- Gladys **5.3.0** oder neuer.
 - Ein **fernausgelesener Wasserzähler** (Funk): Ohne Fernauslesung zeigt das Kundenkonto nur einen
   Zählerstand, der zweimal im Jahr abgelesen wird, und die Integration hat dir nichts Tägliches
   zu zeigen.

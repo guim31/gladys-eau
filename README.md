@@ -43,7 +43,7 @@ Plus:
 
 ## Requirements
 
-- Gladys **5.1.0** or later.
+- Gladys **5.3.0** or later.
 - A remotely read water meter and an online customer area at Suez or Saur (email and password).
 - Internet access from Gladys.
 
