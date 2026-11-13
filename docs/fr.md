@@ -34,7 +34,7 @@ suivi en temps réel.
 
 ## Prérequis
 
-- Gladys **5.1.0** ou plus récent.
+- Gladys **5.3.0** ou plus récent.
 - Un **compteur d'eau télérelevé** (radio) : sans télérelève, l'espace client ne montre qu'un
   index relevé deux fois par an, et l'intégration n'a rien de quotidien à vous montrer.
 - Un **espace client en ligne** actif chez votre distributeur, avec son adresse e-mail et son mot

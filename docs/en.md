@@ -33,7 +33,7 @@ monitoring.
 
 ## Prerequisites
 
-- Gladys **5.1.0** or later.
+- Gladys **5.3.0** or later.
 - A **remotely read water meter** (radio): without remote reading, the customer area only shows
   an index read twice a year, and the integration has nothing daily to show you.
 - An active **online customer area** at your distributor, with its email and password. First

@@ -33,7 +33,7 @@ seguimiento en tiempo real.
 
 ## Requisitos previos
 
-- Gladys **5.1.0** o posterior.
+- Gladys **5.3.0** o posterior.
 - Un **contador de agua con telelectura** (radio): sin telelectura, el área de cliente solo muestra
   un índice leído dos veces al año, y la integración no tiene nada diario que mostrarle.
 - Un **área de cliente en línea** activa en su distribuidor, con su correo y su contraseña.
